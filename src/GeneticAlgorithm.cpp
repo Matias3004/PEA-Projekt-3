@@ -1,6 +1,7 @@
 #include "../inc/GeneticAlgorithm.hh"
 
 #include <ctime>
+#include <random>
 
 GeneticAlgorithm::GeneticAlgorithm(Graph *graph, int stop, int population, float crossRate, float mutationRate)
 {
@@ -196,12 +197,15 @@ int GeneticAlgorithm::apply(bool crossing)
     int index, result, p1, p2;
     std::clock_t start;
 
-    for (size_t i = 0; i < size; i++)
+    for (int i = 0; i < size; i++)
         permutation.push_back(i);
 
-    for (size_t i = 0; i < populationSize; i++)
+    for (int i = 0; i < populationSize; i++)
     {
-        std::random_shuffle(permutation.begin(), permutation.end());
+        std::random_device rng;
+        std::mt19937 urng(rng());
+
+        std::shuffle(permutation.begin(), permutation.end(), urng);
         population.push_back(permutation);
     }
 
@@ -217,12 +221,12 @@ int GeneticAlgorithm::apply(bool crossing)
             fitness.push_back(calculatePath(itr));
 
         // Tworzenie nowej populacji na drodze selekcji osobnikow
-        for (size_t j = 0; j < populationSize; j++)
+        for (int j = 0; j < populationSize; j++)
         {
             result = INT32_MAX;
 
             // Wybor najlepszego osobnika z turnieju
-            for (size_t k = 0; k < tournamentSize; k++)
+            for (int k = 0; k < tournamentSize; k++)
             {
                 index = rand() % populationSize;
 
@@ -249,7 +253,7 @@ int GeneticAlgorithm::apply(bool crossing)
         nextPopulation.clear();
 
         // Krzyzowanie osobnikow
-        for (size_t j = 0; j < (int) (crossRate * (float) populationSize); j += 2)
+        for (int j = 0; j < (int) (crossRate * (float) populationSize); j += 2)
         {
             do
             {
@@ -264,7 +268,7 @@ int GeneticAlgorithm::apply(bool crossing)
         }
 
         // Mutacje osobnikow
-        for (size_t j = 0; j < (int) (mutationRate * (float) populationSize); j++)
+        for (int j = 0; j < (int) (mutationRate * (float) populationSize); j++)
         {
             do
             {

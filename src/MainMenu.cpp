@@ -34,7 +34,7 @@ void MainMenu::enable()
         std::cout << "Wspołczynnik krzyzowania: " << crossesCoeff << std::endl;
         std::cout << "Wspolczynnik mutacji: " << mutationCoeff << std::endl;
         std::cout << "Typ krzyzowania: " << crossoverType << std::endl;
-        std::cout << graph.getDescription();
+        std::cout << "\nGRAF\n" << graph.getDescription();
         std::cout << menu;
 
         std::cin >> choice;
@@ -43,11 +43,15 @@ void MainMenu::enable()
         {
             case 1:
             {
+                std::string inputFile = "";
                 do
                 {
                     std::cout << "Podaj nazwę pliku: ";
-                    std::cin >> file;
-                } while (file == "");
+                    std::cin >> inputFile;
+                } while (inputFile == "");
+
+                file = "Test Files/";
+                file.append(inputFile);
                 graph.readGraph(file);
                 
                 break;

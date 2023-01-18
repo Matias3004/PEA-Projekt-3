@@ -6,7 +6,7 @@
 class GeneticAlgorithm
 {
     private:
-        int stop;
+        unsigned long stop;
         int populationSize;
         float crossRate;
         float mutationRate;

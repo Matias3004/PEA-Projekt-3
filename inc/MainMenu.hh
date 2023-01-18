@@ -1,15 +1,15 @@
 #pragma once
 #include <string>
 #include "Graph.hh"
-#include "StringUtilities.hh"
+#include "StringUtils.hh"
 
 class MainMenu
 {
     private:
-        StringUtilities su;
+        StringUtils su;
 
         std::string menu = "";
-        std::string file = "";
+        std::string file;
         Graph graph;
         int time = 0;
         int population = 0;
