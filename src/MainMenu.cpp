@@ -2,7 +2,6 @@
 #include "../inc/GeneticAlgorithm.hh"
 
 #include <iostream>
-#include <algorithm>
 
 MainMenu::MainMenu()
 {
@@ -23,22 +22,6 @@ MainMenu::MainMenu()
 }
 
 MainMenu::~MainMenu() {}
-
-bool MainMenu::iequals(const std::string& a, const std::string& b)
-{
-    return std::equal(a.begin(), a.end(),
-                      b.begin(), b.end(),
-                      [](char a, char b) {
-                          return tolower(a) == tolower(b);
-                      });
-}
-
-std::string MainMenu::toUpperCase(std::string &str)
-{
-    std::transform(str.begin(), str.end(), str.begin(), ::toupper);
-
-    return str;
-}
 
 void MainMenu::enable()
 {
@@ -116,10 +99,10 @@ void MainMenu::enable()
                     std::cout << "Podaj typ krzyzowania [OX/PMX]: ";
                     std::cin >> crossoverType;
                 } while (crossoverType == "" ||
-                    !(iequals(crossoverType, "OX") ||
-                    iequals(crossoverType, "PMX")));
+                    !(su.iequals(crossoverType, "OX") ||
+                    su.iequals(crossoverType, "PMX")));
 
-                crossoverType = toUpperCase(crossoverType);
+                crossoverType = su.toUpperCase(crossoverType);
                 
                 break;
             }

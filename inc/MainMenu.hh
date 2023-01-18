@@ -1,10 +1,13 @@
 #pragma once
 #include <string>
 #include "Graph.hh"
+#include "StringUtilities.hh"
 
 class MainMenu
 {
     private:
+        StringUtilities su;
+
         std::string menu = "";
         std::string file = "";
         Graph graph;
@@ -17,9 +20,6 @@ class MainMenu
     public:
         MainMenu();
         ~MainMenu();
-
-        bool iequals(const std::string&, const std::string&);
-        std::string toUpperCase(std::string&);
 
         void enable();
 };
