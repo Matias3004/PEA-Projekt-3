@@ -29,7 +29,7 @@ void MainMenu::enable()
 
     while (true)
     {
-        std::cout << "Czas: " << time << "s\n";
+        std::cout << "Czas: " << timeBound << "s\n";
         std::cout << "Populacja: " << population << std::endl;
         std::cout << "Wspołczynnik krzyzowania: " << crossesCoeff << std::endl;
         std::cout << "Wspolczynnik mutacji: " << mutationCoeff << std::endl;
@@ -61,8 +61,8 @@ void MainMenu::enable()
                 do
                 {
                     std::cout << "Podaj czas [s]: ";
-                    std::cin >> time;
-                } while (!time);
+                    std::cin >> timeBound;
+                } while (!timeBound);
                 
                 break;
             }
@@ -112,15 +112,22 @@ void MainMenu::enable()
             }
             case 7:
             {
-                if (!time || !population || !crossesCoeff || !mutationCoeff)
+                if (!timeBound || !population || !crossesCoeff || !mutationCoeff)
                 {
                     std::cout << "Nie podano wszystkich parametrow algorytmu";
                     std::cin.get();
                 }
                 else
                 {
-                    GeneticAlgorithm ga(&graph, time, population, crossesCoeff, mutationCoeff);
-                    ga.apply(true);
+                    GeneticAlgorithm ga(graph, timeBound, population, crossesCoeff, mutationCoeff);
+
+                    if (crossoverType == "OX")
+                        ga.apply(true);
+                    else if (crossoverType == "PMX")
+                        ga.apply(false);
+                    else
+                        std::cout << "Brak określonego krzyzowania" << std::endl;
+
                     std::cin.get();
                 }
 
@@ -128,7 +135,7 @@ void MainMenu::enable()
             }
             case 8:
             {
-                if (!time || !population || !crossesCoeff || !mutationCoeff)
+                if (!timeBound || !population || !crossesCoeff || !mutationCoeff)
                 {
                     std::cout << "Nie podano wszystkich parametrow algorytmu";
                     std::cin.get();
@@ -139,7 +146,7 @@ void MainMenu::enable()
                     std::cout << "Podaj nazwę pliku do zapisania wyniku: ";
                     std::cin >> filename;
 
-                    GeneticAlgorithm ga(&graph, time, population, crossesCoeff, mutationCoeff);
+                    GeneticAlgorithm ga(graph, timeBound, population, crossesCoeff, mutationCoeff);
                     for (size_t i = 0; i < 100; ++i)
                     {
                         std::cout << std::endl << i + 1 << " pomiar...\n";

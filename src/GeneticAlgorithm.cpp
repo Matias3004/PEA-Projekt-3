@@ -2,12 +2,13 @@
 
 #include <ctime>
 #include <random>
+#include <iostream>
 
-GeneticAlgorithm::GeneticAlgorithm(Graph *graph, int stop, int population, float crossRate, float mutationRate)
+GeneticAlgorithm::GeneticAlgorithm(Graph graph, int timeBound, int population, float crossRate, float mutationRate)
 {
-    matrix = graph->getMatrix();
-    size = graph->getVertexCount();
-    this->stop = stop;
+    matrix = graph.getMatrix();
+    size = graph.getVertexCount();
+    this->timeBound = timeBound;
     populationSize = population;
     this->crossRate = crossRate;
     this->mutationRate = mutationRate;
@@ -161,7 +162,7 @@ void GeneticAlgorithm::partiallyCrossover(std::vector<int> &parent1, std::vector
     parent1 = desc2;
 }
 
-int GeneticAlgorithm::calculatePath(std::vector<int> &path)
+int GeneticAlgorithm::calculatePath(std::vector<int> path)
 {
     int result = 0;
 
@@ -189,11 +190,12 @@ void GeneticAlgorithm::saveResultsToFile(std::string filename, int result, doubl
 
 }
 
-int GeneticAlgorithm::apply(bool crossing)
+void GeneticAlgorithm::apply(bool crossing)
 {
     std::vector<std::vector<int>> population, nextPopulation;
     std::vector<int> fitness, permutation;
     int tournamentSize = 5;
+    double time = 0;
     int index, result, p1, p2;
     std::clock_t start;
 
@@ -210,9 +212,10 @@ int GeneticAlgorithm::apply(bool crossing)
     }
 
     start = std::clock();
+    std::cout << "Zaczynamy zabawe\n";
 
     // Kolejne iteracje algorytmu
-    while (((std::clock() - start) / (CLOCKS_PER_SEC)) < stop)
+    while (true)
     {
         fitness.clear();
 
@@ -278,10 +281,15 @@ int GeneticAlgorithm::apply(bool crossing)
             
             std::swap(population.at(j)[p1], population.at(j + 1)[p2]);
         }
+
+        time = (std::clock() - start) / (double) CLOCKS_PER_SEC;
+
+        // Osiągnięte kryterium stopu
+        if (time >= timeBound)
+        {
+            std::cout << "Algorytm zakończył działanie!!!\n";
+
+            return;
+        }
     }
-
-    // Osiągnięte kryterium stopu
-    result = *(std::min_element(fitness.begin(), fitness.end()));
-
-    return result;
 }
