@@ -9,7 +9,7 @@ class GeneticAlgorithm
     private:
         Graph cities;
         int* shortestPath = nullptr;
-        int shortestPathValue = INT_MAX;
+        int shortestPathValue = INT32_MAX;
         int startingVertex = 0;
         std::mt19937 rng;
 
@@ -28,7 +28,7 @@ class GeneticAlgorithm
         void swapElements(int*, int, int);
         void crossOnePoint(int*, int*);
         int findInArray(int*, int);
-        void copyRoute(int*, int*);
+        void copyPath(int*, int*);
 
     public:
         GeneticAlgorithm();
@@ -39,5 +39,5 @@ class GeneticAlgorithm
         std::string getShortestPath();
         int getShortestPathValue();
 
-        void solve(const int, const double, const double, int, const int);
+        void solve(const int, const double, const double, int);
 };

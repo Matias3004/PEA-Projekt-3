@@ -14,7 +14,7 @@ void Graph::createMatrix()
     {
         matrixPtr[i] = new int[vertexCount];
         for (int j = 0; j < vertexCount; j++)
-            matrixPtr[i][j] = INT_MAX; // Maksymalna wartość int jako nieistniejąca krawędź
+            matrixPtr[i][j] = INT32_MAX; // Maksymalna wartość int jako nieistniejąca krawędź
     }
 }
 
@@ -50,7 +50,7 @@ int Graph::readGraph(std::string filename)
             input >> temp;
             matrixPtr[i][j] = temp;
             if (i == j)
-                matrixPtr[i][j] = INT_MAX;
+                matrixPtr[i][j] = INT32_MAX;
         }
     }
 
@@ -75,7 +75,7 @@ std::string Graph::printStruct()
         structure += to_string(i);
         for (int j = 0; j < vertexCount; j++)
         {
-            if (matrixPtr[i][j] == INT_MAX)
+            if (matrixPtr[i][j] == INT32_MAX)
                 structure += " x";
             else
                 structure += ' ' + to_string(matrixPtr[i][j]);
