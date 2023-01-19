@@ -1,108 +1,89 @@
 #include "../inc/Graph.hh"
 
-#include <fstream>
-#include <string>
-#include <iostream>
-
 Graph::Graph() {}
 
-Graph::~Graph() {}
-
-bool Graph::readGraph(std::string filename)
+Graph::~Graph()
 {
-    int **temp;
-    description = "";
-    std::string tempDesc = "";
-
-    std::ifstream fin;
-    fin.open(filename);
-
-    if (fin.fail() || fin.eof())
-        return false;
-
-    if (vertexCount)
-    {
-        for (int i = 0; i < vertexCount; i++)
-            delete[] matrix[i];
-
-        delete[] matrix;
-    }
-
-    for (int i = 0; i < 3; i++)
-    {
-        getline(fin, tempDesc);
-        description.append(tempDesc + "\n");
-    }
-
-    fin >> tempDesc;
-
-    description.append(tempDesc + "\n");
-    fin >> vertexCount;
-
-    description.append (std::to_string(vertexCount) + "\n");
-
-    for (int i = 0; i < 4; i++)
-        getline(fin, tempDesc);
-
-    temp = new int *[vertexCount];
-
-    for (int i = 0; i < vertexCount; i++)
-        temp[i] = new int[vertexCount];
-
-    for (int c = 0; c < vertexCount; c++)
-    {
-        for (int r = 0; r < vertexCount; r++)
-            fin >> temp[r][c];
-    }
-
-    fin.close();
-
-    matrix = temp;
-
-    return true;
+    deleteMatrix();
 }
 
-bool Graph::readGraphSmall(std::string filename)
+void Graph::createMatrix()
 {
-    int **temp;
-
-    std::ifstream fin;
-    fin.open(filename);
-
-    if (fin.fail() || fin.eof())
-        return false;
-
-    if (vertexCount)
-    {
-        for (int i = 0; i < vertexCount; i++)
-            delete[] matrix[i];
-
-        delete[] matrix;
-    }
-
-    fin >> vertexCount;
-
-    temp = new int *[vertexCount];
-
+    matrixPtr = new int *[vertexCount];
     for (int i = 0; i < vertexCount; i++)
-        temp[i] = new int[vertexCount];
-
-    for (int c = 0; c < vertexCount; c++)
     {
-        for (int r = 0; r < vertexCount; r++)
-            fin >> temp[r][c];
+        matrixPtr[i] = new int[vertexCount];
+        for (int j = 0; j < vertexCount; j++)
+            matrixPtr[i][j] = INT_MAX; // Maksymalna wartość int jako nieistniejąca krawędź
     }
-
-    fin.close();
-
-    matrix = temp;
-
-    return true;
 }
 
-int** Graph::getMatrix()
+void Graph::deleteMatrix()
 {
-    return matrix;
+    if (matrixPtr != nullptr)
+    {
+        for (int i = 0; i < vertexCount; i++)
+            delete[] matrixPtr[i];
+
+        delete[] matrixPtr;
+        matrixPtr = nullptr;
+    }
+}
+
+int Graph::readGraph(std::string filename)
+{
+    deleteMatrix();
+
+    std::ifstream input(filename.c_str());
+    if (!input)
+        return 0;
+
+    input >> vertexCount;
+
+    createMatrix();
+
+    for (int i = 0; i < vertexCount; i++)
+    {
+        for (int j = 0; j < vertexCount; j++)
+        {
+            int temp;
+            input >> temp;
+            matrixPtr[i][j] = temp;
+            if (i == j)
+                matrixPtr[i][j] = INT_MAX;
+        }
+    }
+
+    input.close();
+
+    return 1;
+}
+
+std::string Graph::printStruct()
+{
+    if (matrixPtr == nullptr)
+        return "Graf jest pusty!\n";
+
+    std::string structure = "Macierz sąsiedztwa:\n\\";
+    for (int i = 0; i < vertexCount; i++)
+        structure += ' ' + to_string(i);
+
+    structure += '\n';
+
+    for (int i = 0; i < vertexCount; i++)
+    {
+        structure += to_string(i);
+        for (int j = 0; j < vertexCount; j++)
+        {
+            if (matrixPtr[i][j] == INT_MAX)
+                structure += " x";
+            else
+                structure += ' ' + to_string(matrixPtr[i][j]);
+        }
+        structure += '\n';
+    }
+
+    return structure;
 }
 
 int Graph::getVertexCount()
@@ -110,39 +91,20 @@ int Graph::getVertexCount()
     return vertexCount;
 }
 
-std::string Graph::getDescription()
+int Graph::getElement(int n, int m)
 {
-    if (!vertexCount)
-        return "Brak danych\n";
-    else
-        return description;
+    return matrixPtr[n][m];
 }
 
-std::string Graph::toString()
+int** Graph::getMatrixPtr()
 {
-    std::string graph = "";
-    graph.append(description);
+    return matrixPtr;
+}
 
-    if (vertexCount)
-    {
-        for (int r = 0; r < vertexCount; r++)
-        {
-            for (int c = 0; c < vertexCount; c++)
-            {
-                if ((matrix[r][c] < 10) && (matrix[r][c] >= 0))
-                    graph += std::to_string(matrix[r][c]) + "    ";
-                else if (((matrix[r][c] < 100) && (matrix[r][c] > 9)) || (matrix[r][c] < 0))
-                    graph += std::to_string(matrix[r][c]) + "   ";
-                else if (matrix[r][c] == 100000000)
-                    graph += "N    ";
-                else
-                    graph += std::to_string(matrix[r][c]) + "  ";
-            }
-            graph += "\n";
-        }
-    }
-    else
-        graph = "Graf pusty\n";
-
-    return graph;
+bool Graph::isEmpty()
+{
+    if (matrixPtr == nullptr)
+        return true;
+    else 
+        return false;
 }

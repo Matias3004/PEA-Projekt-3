@@ -1,12 +1,12 @@
 #pragma once
 #include <string>
 #include "Graph.hh"
-#include "StringUtils.hh"
+// #include "StringUtils.hh"
 
 class MainMenu
 {
     private:
-        StringUtils su;
+        // StringUtils su;
 
         std::string menu = "";
         std::string file;

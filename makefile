@@ -1,5 +1,5 @@
 CC = clang++
-CFLAGS = -Wall -Wextra -Wpedantic -g -std=c++14
+CFLAGS = -Wall -Wextra -Wpedantic -g -std=c++11
 
 all: PEA-Projekt3
 

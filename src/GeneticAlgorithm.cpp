@@ -1,295 +1,170 @@
 #include "../inc/GeneticAlgorithm.hh"
 
-#include <ctime>
+#include <vector>
 #include <random>
-#include <iostream>
 
-GeneticAlgorithm::GeneticAlgorithm(Graph graph, int timeBound, int population, float crossRate, float mutationRate)
+// Inicjalizuje najkrotszą ściezkę metodą zachłanną startując z korzenia
+void GeneticAlgorithm::initPath()
 {
-    matrix = graph.getMatrix();
-    size = graph.getVertexCount();
-    this->timeBound = timeBound;
-    populationSize = population;
-    this->crossRate = crossRate;
-    this->mutationRate = mutationRate;
+    if (shortestPath != nullptr)
+        delete shortestPath;
+
+    shortestPath = new int[cities.getVertexCount()];
+    shortestPath[0] = startingVertex;
+
+    bool *alreadyVisited = new bool[cities.getVertexCount()];
+    for (int i = 0; i < cities.getVertexCount(); i++)
+        alreadyVisited[i] = false;
+
+    alreadyVisited[startingVertex] = true;
+
+    for (int i = 0; i < cities.getVertexCount(); i++)
+    {
+        int min = INT_MAX;
+        int chosen = -1;
+
+        for (int j = 0; j < cities.getVertexCount(); j++)
+        {
+            if (cities.getElement(shortestPath[i], j) < min && !alreadyVisited[j])
+            {
+                min = cities.getElement(shortestPath[i], j);
+                chosen = j;
+            }
+        }
+
+        alreadyVisited[chosen] = true;
+        shortestPath[i + 1] = chosen;
+    }
+
+    delete[] alreadyVisited;
+    shortestPathValue = calculatePathLength(shortestPath);
 }
 
-void GeneticAlgorithm::orderedCrossover(std::vector<int> &parent1, std::vector<int> &parent2)
+// Oblicza długość danej ściezki
+int GeneticAlgorithm::calculatePathLength(int *path)
 {
-    std::vector<int> desc1(size), desc2(size);
-    std::vector<int>::iterator itr1, itr2;
-    int begin, end;
-
-    do
+    int length = 0;
+    for (int i = 0; i < cities.getVertexCount(); i++)
     {
-        begin = rand() % size;
-        end = rand() % size;
-    } while ((0 >= (end - begin)) || !begin || !(end - (size - 1)));
-
-    for (int i = begin; i<= end; ++i)
-    {
-        desc1[i] = parent1[i];
-        desc2[i] = parent2[i];
+        length += cities.getElement(
+            path[i], path[i + 1 >= cities.getVertexCount() ? 0 : i + 1]);
     }
 
-    itr1 = desc1.begin() + end + 1;
-    itr2 = parent2.begin() + end + 1;
+    return length;
+}
 
-    while (itr1 != desc1.begin() + begin)
+// Ustawia losową ściezkę na danym wskazniku
+void GeneticAlgorithm::setRandomPath(int *path)
+{
+    std::vector<int> possibleCities;
+    for (int i = 0; i < cities.getVertexCount(); i++)
+        possibleCities.push_back(i);
+
+    possibleCities.erase(possibleCities.begin() + startingVertex);
+    path[0] = startingVertex;
+
+    for (int i = 1; possibleCities.size() > 0; i++)
     {
-        if (!(isInPath(*itr2, begin, end, desc1)))
-        {
-            *itr1 = *itr2;
-
-            if (itr1 == desc1.end() - 1)
-                itr1 = desc1.begin();
-            else
-                itr1++;
-
-            if (itr2 == parent2.end() - 1)
-                itr2 = parent2.begin();
-            else
-                itr2++;
-        }
-        else
-        {
-            if (itr2 == parent2.end() - 1)
-                itr2 = parent2.begin();
-            else
-                itr2++;
-        }
+        int randomNum = std::uniform_int_distribution<
+            std::mt19937::result_type>{0, possibleCities.size() - 1}(rng);
+        path[i] = possibleCities[randomNum];
+        possibleCities.erase(possibleCities.begin() + randomNum);
     }
+}
 
-    itr1 = desc2.begin() + end + 1;
-    itr2 = parent1.begin() + end + 1;
+// Zwraca klasę danej ściezki -> im wyzsza, tym lepsza ściezka
+int GeneticAlgorithm::gradePath(int *path)
+{
+    return shortestPathValue - calculatePathLength(path);
+}
 
-    while (itr1 != desc2.end() + begin)
-    {
-        if (!(isInPath(*itr2, begin, end, desc2)))
-        {
-            *itr1 = *itr2;
-
-            if (itr1 == desc2.end() - 1)
-                itr1 = desc2.begin();
-            else
-                itr1++;
-
-            if (itr2 == parent1.end() - 1)
-                itr2 = parent1.begin();
-            else
-                itr2++;
-        }
-        else
-        {
-            if (itr2 == parent1.end() - 1)
-                itr2 = parent1.begin();
-            else
-                itr2++;
-        }
-    }
-
-    parent1.clear();
-    parent2.clear();
+// Normalizuje klasy ściezek, aby były większe niz 0
+void GeneticAlgorithm::normalizeGrades(int *grades, int populationSize)
+{
+    int min = 0;
     
-    parent1 = desc1;
-    parent2 = desc2;
-}
-
-void GeneticAlgorithm::partiallyCrossover(std::vector<int> &parent1, std::vector<int> &parent2)
-{
-    std::vector<int> desc1(size, -1), desc2(size, -1);
-    std::vector<int> map1(size, -1), map2(size, -1);
-    int begin, end, temp;
-
-    do
+    for (int i = 0; i < populationSize; i++)
     {
-        begin = rand() % size;
-        end = rand() % size;
-    } while ((0 >= (end - begin)) || !begin || !(end - (size - 1)));
-
-    for (int i = begin; i < end; i++)
-    {
-        desc1[i] = parent1[i];
-        desc2[i] = parent2[i];
-        map1[parent1[i]] = parent2[i];
-        map2[parent1[i]] = parent1[i];
+        if (grades[i] < min)
+            min = grades[i];
     }
 
-    for (int i = 0; i < size; i++)
+    min *= -1;
+    min++;
+
+    for (int i = 0; i < populationSize; i++)
+        grades[i] += min;
+}
+
+// Kopiuje populację do innej na podstawie wybranych rodzicow
+void GeneticAlgorithm::copyPopulation(int **from, int **to, int *selectedParents, int populationSize)
+{
+    for (int i = 0; i < populationSize; i++)
     {
-        if (desc1[i] == -1)
-        {
-            if (!isInPath(parent2[i], begin, end, desc1))
-                desc1[i] = parent2[i];
-            else
-            {
-                temp = parent2[i];
-
-                do
-                {
-                    temp = map1[temp];
-                } while (isInPath(temp, begin, end, desc1));
-
-                desc1[i] = temp;
-            }
-        }
+        for (int j = 0; j < cities.getVertexCount(); j++)
+            to[i][j] = from[selectedParents[i]][j];
     }
+}
 
-    for (int i = 0; i < size; i++)
+// Kopiuje niezmienioną populację do innej
+void GeneticAlgorithm::copyPopulationIntact(int **from, int **to, int populationSize)
+{
+    for (int i = 0; i < populationSize; i++)
     {
-        if (desc2[i] == -1)
-        {
-            if (!isInPath(parent1[i], begin, end, desc2))
-                desc2[i] = parent1[i];
-            else
-            {
-                temp = parent1[i];
-
-                do
-                {
-                    temp = map2[temp];
-                } while (isInPath(temp, begin, end, desc2));
-                
-                desc2[i] = temp;
-            }
-        }
+        for (int j = 0; j < cities.getVertexCount(); j++)
+            to[i][j] = from[i][j];
     }
-
-    parent1.clear();
-    parent2.clear();
-
-    parent1 = desc1;
-    parent1 = desc2;
 }
 
-int GeneticAlgorithm::calculatePath(std::vector<int> path)
+// Wybiera rodzicow do selekcji na podstawie ruletki z uzyciem klas sciezek
+void GeneticAlgorithm::selectByRoulette(int *grades, int *selection, int populationSize)
 {
-    int result = 0;
-
-    for (int i = 0; i < size; i++)
-        result += matrix[path[i]][path[i + 1]];
-
-    result += matrix[path[size - 1]][path[0]];
-
-    return result;
-}
-
-bool GeneticAlgorithm::isInPath(int element, int begin, int end, std::vector<int> &path)
-{
-    for (int i = begin; i < end; i++)
-    {
-        if (element == path[i])
-            return true;
-    }
-
-    return false;
-}
-
-void GeneticAlgorithm::saveResultsToFile(std::string filename, int result, double time)
-{
-
-}
-
-void GeneticAlgorithm::apply(bool crossing)
-{
-    std::vector<std::vector<int>> population, nextPopulation;
-    std::vector<int> fitness, permutation;
-    int tournamentSize = 5;
-    double time = 0;
-    int index, result, p1, p2;
-    std::clock_t start;
-
-    for (int i = 0; i < size; i++)
-        permutation.push_back(i);
+    int gradesSum = 0;
 
     for (int i = 0; i < populationSize; i++)
     {
-        std::random_device rng;
-        std::mt19937 urng(rng());
-
-        std::shuffle(permutation.begin(), permutation.end(), urng);
-        population.push_back(permutation);
+        gradesSum += grades[i];
+        grades[i] = gradesSum;
     }
 
-    start = std::clock();
-    std::cout << "Zaczynamy zabawe\n";
+    std::uniform_int_distribution<std::mt19937::result_type> rulDist(1, gradesSum - 1);
 
-    // Kolejne iteracje algorytmu
-    while (true)
+    for (int i = 0; i < populationSize; i++)
     {
-        fitness.clear();
-
-        // Ocena jakości osobnikow
-        for (auto &itr : population)
-            fitness.push_back(calculatePath(itr));
-
-        // Tworzenie nowej populacji na drodze selekcji osobnikow
+        int selected = rulDist(rng);
         for (int j = 0; j < populationSize; j++)
         {
-            result = INT32_MAX;
-
-            // Wybor najlepszego osobnika z turnieju
-            for (int k = 0; k < tournamentSize; k++)
+            if (selected - grades[j] < 0)
             {
-                index = rand() % populationSize;
+                selection[i] = j;
 
-                if (fitness[index] < result)
-                {
-                    result = fitness[index];
-                    permutation.clear();
-                    permutation = population[index];
-                }
+                break;
             }
-            nextPopulation.push_back(permutation);
-        }
-
-        // Wymiana pokoleń
-        for (auto &itr : population)
-            itr.clear();
-
-        population.clear();
-        population = nextPopulation;
-
-        for (auto &itr : nextPopulation)
-            itr.clear();
-
-        nextPopulation.clear();
-
-        // Krzyzowanie osobnikow
-        for (int j = 0; j < (int) (crossRate * (float) populationSize); j += 2)
-        {
-            do
-            {
-                p1 = rand() % populationSize;
-                p2 = rand() % populationSize;
-            } while (!(p1 - p2));
-            
-            if (crossing)
-                orderedCrossover(population.at(j), population.at(j + 1));
-            else
-                partiallyCrossover(population.at(j), population.at(j + 1));
-        }
-
-        // Mutacje osobnikow
-        for (int j = 0; j < (int) (mutationRate * (float) populationSize); j++)
-        {
-            do
-            {
-                p1 = rand() % size;
-                p2 = rand() % size;
-            } while (!(p1 - p2));
-            
-            std::swap(population.at(j)[p1], population.at(j + 1)[p2]);
-        }
-
-        time = (std::clock() - start) / (double) CLOCKS_PER_SEC;
-
-        // Osiągnięte kryterium stopu
-        if (time >= timeBound)
-        {
-            std::cout << "Algorytm zakończył działanie!!!\n";
-
-            return;
         }
     }
+}
+
+// Mutuje daną ściezkę zamieniając miejscami dwa rozne punkty
+void GeneticAlgorithm::mutate(int *path)
+{
+    int pointA = 0;
+    int pointB = 0;
+    std::uniform_int_distribution<std::mt19937::result_type> popDist(
+        0, cities.getVertexCount() - 1);
+
+    while (pointA == pointB)
+    {
+        pointA = popDist(rng);
+        pointB = popDist(rng);
+    }
+
+    swapElements(path, pointA, pointB);
+}
+
+// Zamienia miejscami dwa elementy
+void GeneticAlgorithm::swapElements(int *path, int i, int j)
+{
+    int temp = path[i];
+    path[i] = path[j];
+    path[j] = temp;
 }
