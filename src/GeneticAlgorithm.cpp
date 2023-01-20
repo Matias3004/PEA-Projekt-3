@@ -79,7 +79,7 @@ void GeneticAlgorithm::setRandomPath(int *path)
     for (int i = 1; possibleCities.size() > 0; i++)
     {
         int randomNum = std::uniform_int_distribution<
-            std::mt19937::result_type>{0, possibleCities.size() - 1}(rng);
+            std::mt19937::result_type>{0, (uint32_t) possibleCities.size() - 1}(rng);
         path[i] = possibleCities[randomNum];
         possibleCities.erase(possibleCities.begin() + randomNum);
     }
